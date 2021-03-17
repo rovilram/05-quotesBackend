@@ -1,11 +1,7 @@
 const express = require("express");
+var MongoClient = require('mongodb').MongoClient;
+const { v4: uuidv4 } = require('uuid');
 require("dotenv").config()
-
-//CONEXIÓN CON MONGO
-const { MongoClient } = require("mongodb");
-
-
-const server = express();
 
 //leemos del .env
 const WEB_PORT = process.argv[3] || process.env.WEB_PORT || 8080;
@@ -14,190 +10,99 @@ const DB_HOST = process.env.DB_HOST || "localhost";
 const DB_PORT = process.env.DB_PORT || 27017;
 const DB_NAME = process.env.DB_NAME || "quotesdb";
 const DB_COLLECTION_NAME = process.env.DB_COLLECTION_NAME || "quotes";
+const server = express();
 
-console.log(WEB_HOST, WEB_PORT, DB_HOST, DB_PORT, DB_NAME, DB_COLLECTION_NAME)
-
-
-// Connection URI
-const uri =
-    `mongodb://${DB_HOST}:${DB_PORT}/` //?poolSize=20&writeConcern=majority`;
-
-//métodos manejo datos
-
-const getDBQuotes = async (collectionDB) => {
-    console.log("AQUI ESTOY")
-    let resultArr = [];
-    try {
-        console.log("MI COLECCIón", collectionDB );
-        const findResult = await collectionDB.find({});
-        //console.log(findResult)
-        await findResult.forEach(res => {
-            resultArr.push(res);
-            console.log("paso por el foreach")
-        })
-        return resultArr;
-    }
-    catch {
-        console.log("ERROR EN LA CONSULTA")
-        //throw (new Error("Error al hacer consulta"));
-    }
-}
-
-const putDBQuote = async (quote, collectionDB) => {
-    try {
-        const result = await collectionDB.insertOne(quote);
-        console.log("Objeto insertado: ", result.ops)
-        return result.ops; //devuelvo el objeto insertado
-    }
-    catch {
-        throw new Error("Error al insertar:", quote)
-    }
-}
-
-const pullDBQuote = async (id, quote, collectionDB) => {
-    if (Number(id) === id) id = id.toString();
-    const filter = { id: id };
-    const updateDocument = {
-        $set: {
-            "id": quote.id,
-            "name": quote.name,
-            "quote": quote.quote
-        },
-    };
-
-    try {
-        const result = await collectionDB.updateOne(filter, updateDocument);
-        console.log(`El objeto con id "${id}" se ha modificado`, result.modifiedCount);
-        //devolvemos el número de registros modificados (debe ser 1)
-        return result.modifiedCount;
-    }
-    catch {
-        throw new Error("Error al modificar:", quote)
-    }
-
-}
-
-
-const delDBQuote = async (id, collectionDB) => {
-    if (Number(id) === id) id = id.toString();
-    const filter = { id: id };
-
-
-    try {
-        const result = await collectionDB.deleteOne(filter);
-        console.log(`El objeto con id "${id}" se ha borrado`, result);
-        //devolvemos el número de registros borrados (debe ser 1)
-        return result.deletedCount;
-    }
-    catch {
-        throw new Error("Error al borrar el ID:", id)
-    }
-}
-
-
-/* 
-// Create a new MongoClient
- async function connectDB() {
-    const client = new MongoClient(uri, { useUnifiedTopology: true });
-    try {
-        // Connect the client to the server
-        await client.connect();
-        // Establish and verify connection
-        const db = client.db(DB_NAME);
-        const collectionDB = db.collection(DB_COLLECTION_NAME)
-
-
-        await db.command({ ping: 1 });
-        console.log("Connected successfully to server"); 
-
-      await getDBQuotes(collectionDB)
-          .then(data=>console.log(data)) 
- */
-/*         const quote = {
-            id:"33",
-            name: "roberto",
-            quote: "me cago en mongo"
-        } */
-
-//       await putDBQuotes(quote, collectionDB);
-
-
-/*         const quotePull = {
-            id:"15",
-            name: "sdfsdfsdf",
-            quote: "odfgdfgdfgla k ashe"
-        }
-        const id=null;
-        await pullDBQuote(id, quotePull, collectionDB) */
-/* 
-        const id=15;
-        await delDBQuote(id, collectionDB); */
-/* 
-
-    } finally {
-        // Ensures that the client will close when you finish/error
-        await client.close();
-    }
-} 
-
-connectDB().catch(console.dir); 
-*/
-// JSON support
 server.use(express.urlencoded({ extended: true }));
 server.use(express.json());
 
-server.get('/quotes', async (req, res) => {
-    const urlDatabase = 'mongodb://localhost:27017/';
-    
-      MongoClient.connect(urlDatabase, (error, database) => {
-        if (error) throw error;
-    
-        const collectionDB = database.db("quotesdb").collection("quotes");
 
-        getDBQuotes(collectionDB)
-            .then (data=>console.log(data))   
-            .then(database.close())
+
+server.get('/quotes/:name*?', (req, res) => {
+    let filter = {};
+    const name = req.params.name;
+    if (name) {
+        filter = {
+            name: new RegExp(name,"gi")
+        }
+    }
+    console.log("FILTRO", filter)
+
+    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
+
+    MongoClient.connect(urlDatabase, function (err, db) {
+        if (err) throw err;
+        const dbo = db.db(DB_NAME);
+        dbo.collection(DB_COLLECTION_NAME).find(filter).toArray(function (err, result) {
+            if (err) throw err;
+            console.log(result);
+            res.send(result)
+            db.close();
         });
     });
-    
+})
 
+server.post("/create", (req, res) => {
+    const quote = req.body;
+    quote.id = uuidv4();
+    console.log(quote.id)
+    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
 
+    MongoClient.connect(urlDatabase, function (err, db) {
+        if (err) throw err;
+        const dbo = db.db(DB_NAME);
+        dbo.collection(DB_COLLECTION_NAME).insertOne(quote, function (err, result) {
+            if (err) throw err;
+            console.log("1 documento insertado");
+            res.send(result.ops) //devuelve lo insertado en la base de datos
+            db.close();
+        });
+    });
+})
 
-
-
-/* 
-
-
-    const client = new MongoClient(uri, { useUnifiedTopology: true });
-    try {
-        // Connect the client to the server
-        await client.connect();
-        // Establish and verify connection
-        const db = client.db(DB_NAME);
-        const collectionDB = db.collection(DB_COLLECTION_NAME)
-        //console.log(db, collectionDB)
-
-        await db.command({ ping: 1 });
-        console.log("Connected successfully to server");
-
-        getDBQuotes(collectionDB)
-            .then(data => res.send(data))
-            .catch(error => res.send(new Error("Error en la consulta")))
-
-
+server.put("/modify/:id", (req, res) => {
+    const quote = req.body;
+    const filter = { id: req.params.id };
+    const newvalues = {
+        $set: {
+            id: quote.id,
+            name: quote.name,
+            quote: quote.quote
+        }
     }
-    catch {
-        console.log("ERROR")
-    }
-    finally {
-        // Ensures that the client will close when you finish/error
-        await client.close();
-    }
+    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
 
-});
+    MongoClient.connect(urlDatabase, function (err, db) {
+        if (err) throw err;
+        const dbo = db.db(DB_NAME);
+        dbo.collection(DB_COLLECTION_NAME).updateOne(filter, newvalues, function (err, result) {
+            if (err) throw err;
+            console.log("1 documento modificado");
+            res.send(result.result); //devolvemos objeto con nº de documentos alterados
+            db.close();
+        });
+    });
+})
 
- */
+
+server.delete("/delete/:id", (req, res) => {
+    const filter = { id: req.params.id };
+
+    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
+
+    MongoClient.connect(urlDatabase, function (err, db) {
+        if (err) throw err;
+        const dbo = db.db(DB_NAME);
+        dbo.collection(DB_COLLECTION_NAME).deleteOne(filter, function (err, result) {
+            if (err) throw err;
+            console.log("1 documento borrado");
+            res.send(result.result); //devolvemos objeto con nº de documentos borrados
+            db.close();
+        });
+    });
+})
+
 
 server.listen(WEB_PORT, WEB_HOST,
     () => console.log(`Servidor funcionando en el puerto ${WEB_PORT} de ${WEB_HOST}`)
 );
+

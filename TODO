@@ -1,16 +1,18 @@
 REQUISITOS:
     ✔ github @done(21-03-17 10:42)
     Objetos
-    Node node, express, nodemon, dotenv, y MongoDb
-        .env
-        NPM express, nodemon, dotenv, y MongoDb uuid
+    ✔ Node @done(21-03-17 22:37)
+        ✔ .env @done(21-03-17 22:37)
+        ✔ NPM express, nodemon, dotenv, y MongoDb uuid @done(21-03-17 11:24)
     MongoDB
-        conexion a JS con mongoclient.
-        dentro de mongoclient se van a hacer los endpoint CRUD
+        ✔ conexion a JS con mongoclient. @done(21-03-17 22:38)
         endpoints
-            GET/quotes :name OPCIONAL . Devuelve toda la colección
-            POST/create. request body (name, quote) Genera id (uuid)
-            PUT/modify/:id actualiza lo recibido en body
-            DELETE/delete/:id borra el registro
+            ✔ GET/quotes :name OPCIONAL . Devuelve toda la colección @done(21-03-17 22:38)
+            ✔ POST/create. request body (name, quote) Genera id (uuid) @done(21-03-17 22:38)
+            ✔ PUT/modify/:id actualiza lo recibido en body @done(21-03-17 22:38)
+            ✔ DELETE/delete/:id borra el registro @done(21-03-17 22:38)
 
 
+
+PROPIOS:
+    Ver como cambiar contraseña de mongo
