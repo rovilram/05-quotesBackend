@@ -1,0 +1,16 @@
+REQUISITOS:
+    ✔ github @done(21-03-17 10:42)
+    Objetos
+    Node node, express, nodemon, dotenv, y MongoDb
+        .env
+        NPM express, nodemon, dotenv, y MongoDb uuid
+    MongoDB
+        conexion a JS con mongoclient.
+        dentro de mongoclient se van a hacer los endpoint CRUD
+        endpoints
+            GET/quotes :name OPCIONAL . Devuelve toda la colección
+            POST/create. request body (name, quote) Genera id (uuid)
+            PUT/modify/:id actualiza lo recibido en body
+            DELETE/delete/:id borra el registro
+
+
