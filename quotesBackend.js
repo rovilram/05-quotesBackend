@@ -10,8 +10,10 @@ const DB_HOST = process.env.DB_HOST || "localhost";
 const DB_PORT = process.env.DB_PORT || 27017;
 const DB_NAME = process.env.DB_NAME || "quotesdb";
 const DB_COLLECTION_NAME = process.env.DB_COLLECTION_NAME || "quotes";
-const server = express();
+const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
 
+
+const server = express();
 server.use(express.urlencoded({ extended: true }));
 server.use(express.json());
 
@@ -27,9 +29,8 @@ server.get('/quotes/:name*?', (req, res) => {
     }
     console.log("FILTRO", filter)
 
-    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
 
-    MongoClient.connect(urlDatabase, function (err, db) {
+    MongoClient.connect(urlDatabase,{ useUnifiedTopology: true },  function (err, db) {
         if (err) throw err;
         const dbo = db.db(DB_NAME);
         dbo.collection(DB_COLLECTION_NAME).find(filter).toArray(function (err, result) {
@@ -44,8 +45,7 @@ server.get('/quotes/:name*?', (req, res) => {
 server.post("/create", (req, res) => {
     const quote = req.body;
     quote.id = uuidv4();
-    console.log(quote.id)
-    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
+
 
     MongoClient.connect(urlDatabase, function (err, db) {
         if (err) throw err;
@@ -63,14 +63,8 @@ server.put("/modify/:id", (req, res) => {
     const quote = req.body;
     const filter = { id: req.params.id };
     const newvalues = {
-        $set: {
-            id: quote.id,
-            name: quote.name,
-            quote: quote.quote
-        }
+        $set: quote
     }
-    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
-
     MongoClient.connect(urlDatabase, function (err, db) {
         if (err) throw err;
         const dbo = db.db(DB_NAME);
@@ -87,7 +81,6 @@ server.put("/modify/:id", (req, res) => {
 server.delete("/delete/:id", (req, res) => {
     const filter = { id: req.params.id };
 
-    const urlDatabase = `mongodb://${DB_HOST}:${DB_PORT}/`;
 
     MongoClient.connect(urlDatabase, function (err, db) {
         if (err) throw err;
